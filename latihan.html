@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Toko Online</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #fdfdfd;
+    }
+
+    header {
+      background: #A4B465;
+      padding: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: white;
+      flex-wrap: wrap;
+    }
+
+    h1 {
+      margin: 0;
+    }
+
+    #cart {
+      cursor: pointer;
+      background-color: #F5ECD5;
+      color: black;
+      padding: 5px 10px;
+      border-radius: 5px;
+    }
+
+    .products {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      padding: 20px;
+      justify-content: center;
+    }
+
+    .product {
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      padding: 10px;
+      width: 180px;
+      background: white;
+      text-align: center;
+      transition: transform 0.2s;
+    }
+
+    .product:hover {
+      transform: scale(1.03);
+    }
+
+    .product img {
+      max-width: 100%;
+      height: 120px;
+      object-fit: cover;
+      border-radius: 5px;
+    }
+
+    .product button {
+      margin-top: 10px;
+      padding: 6px 12px;
+      background: #4caf50;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    #cart-box, #receipt {
+      background: #f0f0f0;
+      padding: 20px;
+      margin: 20px;
+      display: none;
+    }
+
+    #receipt {
+      background: #e8ffe8;
+    }
+    .product .info {
+      text-align: left;
+      font-size: 0.9em;
+      color: #555;
+      margin-top: 10px;
+    }
+ 
+    .product label {
+      display: block;
+      margin-top: 5px;
+      font-weight: bold;
+    }
+
+    .product select {
+      width: 50%;
+      padding: 4px;
+      margin-top: 2px;
+      font-size: 0.9em;
+    }
+
+    .product .options {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .product .options label {
+      flex: 1;
+      font-weight: bold;
+    }
+
+    .product .options select {
+      width: 100%;
+      padding: 4px;
+      margin-top: 4px;
+      font-size: 0.9em;
+    }
+    #checkout-section {
+      background: #fff;
+      padding: 20px;
+      margin: 20px;
+      display: none;
+    }
+    #cart-box table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    #cart-box th, #cart-box td {
+      padding: 10px;
+      text-align: center;
+      border-bottom: 1px solid #ccc;
+    }
+
+    #cart-box th {
+      background-color: #A4B465;
+      color: white;
+    }
+
+    #cart-box input[type="number"] {
+      width: 60px;
+      padding: 4px;
+      text-align: center;
+    }
+
+    #cart-box button {
+      background-color: #e53935;
+      color: white;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    #cart-box button:hover {
+      background-color: #c62828;
+    }
+
+
+  </style>
+</head>
+<body>
+  <header>
+    <h1>The Crafted Six</h1>
+    <div id="cart" onclick="toggleCart()">🛒 Keranjang (<span id="cart-count">0</span>)</div>
+  </header>
+
+  <main>
+    <div class="products" id="product-list"></div>
+  </main>
+
+  <div id="cart-box">
+  <h2>Keranjang</h2>
+  <table style="width:100%; border-collapse:collapse" id="cart-items">
+    <thead>
+      <tr style="border-bottom: 1px solid #ccc;">
+        <th>Produk</th>
+        <th>Ukuran</th>
+        <th>Warna</th>
+        <th>Jumlah</th>
+        <th>Harga</th>
+        <th>Subtotal</th>
+        <th>Aksi</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+  <p style="text-align:right; margin-top:10px;">
+    <strong>Total: Rp<span id="total">0</span></strong>
+  </p>
+  <div style="text-align:right;">
+    <button onclick="checkout()" style="padding:8px 16px; background:#4caf50; color:white; border:none; border-radius:5px; cursor:pointer;">
+      Checkout
+    </button>
+  </div>
+</div>
+
+<!-- Bagian checkout form -->
+<div id="checkout-section">
+  <h2>Checkout</h2>
+  <label>Alamat Pengiriman:</label><br>
+  <textarea id="shipping-address" rows="4" cols="50"></textarea><br><br>
+
+  <label>Metode Pembayaran:</label><br>
+  <select id="payment-method">
+    <option value="Transfer Bank">Transfer Bank</option>
+    <option value="COD">Bayar di Tempat (COD)</option>
+    <option value="E-Wallet">E-Wallet</option>
+  </select><br><br>
+
+  <button onclick="confirmCheckout()">Konfirmasi Pembayaran</button>
+</div>
+
+<!-- Bagian struk belanja -->
+<div id="receipt" style="display: none;">
+  <h2>Struk Belanja</h2>
+  <div id="receipt-details"></div>
+  <button onclick="resetShop()">Belanja Lagi</button>
+</div>
+
+  <script>
+  const products = [
+  {
+    name: "Bouguet",
+    price: 100000,
+    img: "assets/jam2.png",
+    description: "Bouquet bunga cantik untuk hadiah istimewa.",
+    sizes: ["3","6","9","12","15"],
+    colors: ["Merah", "Pink","biru","kuning", "Putih"]
+  },
+  {
+    name: "Cincin",
+    price: 1200000,
+    img: "assets/jam3.png",
+    description: "Cincin elegan cocok untuk tunangan atau hadiah romantis.",
+    sizes: ["16", "17","18","19", "20"],
+    colors: ["Perak", "Emas"]
+  },
+  {
+    name: "Piyama",
+    price: 140000,
+    img: "images/piyama3.jpg",
+    description: "Piyama lembut dan nyaman untuk tidur nyenyak.",
+    sizes: ["S", "M", "L", "XL"],
+    colors: ["Biru", "Abu", "Putih"]
+  },
+  {
+    name: "Camera Sony",
+    price: 16000000,
+    img: "assets/jam5.png",
+    description: "Kamera Sony dengan kualitas gambar tinggi dan fitur canggih.",
+    sizes: ["L","M"],
+    colors: ["Hitam","putih",]
+  },
+  {
+    name: "Baju One Set",
+    price: 180000,
+    img: "images/baju1.jpg",
+    description: "Setelan baju modis, cocok untuk acara santai atau semi formal.",
+    sizes: ["S", "M", "L"],
+    colors: ["Cream", "Hijau"]
+  },
+  {
+    name: "Sandal RF Store",
+    price: 45000,
+    img: "images/hels6.jpg",
+    description: "Sandal kasual dengan desain simpel dan nyaman dipakai.",
+    sizes: ["36", "37", "38", "39", "40"],
+    colors: ["Hitam", "Putih"]
+  },
+  {
+    name: "Hermes Kelly 28",
+    price: 220000000,
+    img: "images/jam6.png",
+    description: "Tas Hermes Kelly 28 original, mewah dan ikonik.",
+    sizes: ["L","M"],
+    colors: ["Merah", "Hitam"]
+  },
+  {
+    name: "New Balance 530",
+    price: 2400000,
+    img: "images/jam8.png",
+    description: "Sepatu New Balance 530 nyaman untuk aktivitas harian.",
+    sizes: ["38", "39", "40", "41", "42"],
+    colors: ["Abu", "Putih"]
+  },
+  {
+    name: "Handball Spezial Shoes",
+    price: 2600000,
+    img: "images/sepatu1.jpg",
+    description: "Sepatu Adidas klasik untuk gaya sporty yang stylish.",
+    sizes: ["38", "39", "40", "41"],
+    colors: ["Navy", "Coklat"]
+  },
+  {
+    name: "Air Jordan High Retro OG",
+    price: 4800000,
+    img: "images/sepatu4.jpg",
+    description: "Sneakers premium Air Jordan untuk para kolektor dan pecinta fashion.",
+    sizes: ["38", "39", "40", "41", "42"],
+    colors: ["Hitam", "Merah", "Putih"]
+  },
+  {
+    name: "Barenbliss",
+    price: 38000,
+    img: "images/bnb.jpg",
+    description: "Lip tint Barenbliss yang tahan lama dan melembapkan bibir.",
+    sizes: ["50ml","100ml"],
+    colors: ["Merah", "Coral", "Peach"]
+  },
+  {
+    name: "Tumbler Astronot",
+    price: 50000,
+    img: "images/btl1.jpg",
+    description: "Tumbler unik bertema astronot, cocok untuk anak-anak dan remaja.",
+    sizes: ["50ml","100ml"],
+    colors: ["Ungu", "Putih", "Biru"]
+  },
+  {
+    name: "HotPants",
+    price: 28000,
+    img: "images/celana2.jpg",
+    description: "Celana pendek kasual untuk sehari-hari dengan bahan adem.",
+    sizes: ["S", "M", "L"],
+    colors: ["Hitam", "Biru"]
+  },
+  {
+    name: "Short Pants",
+    price: 48000,
+    img: "images/celana5.jpg",
+    description: "Celana pendek modis dan cocok dipadukan dengan berbagai atasan.",
+    sizes: ["S", "M", "L"],
+    colors: ["Abu", "Biru"]
+  },
+  {
+    name: "Gelas Kaca Chefchoice",
+    price: 28000,
+    img: "images/gelas1.jpg",
+    description: "Gelas kaca elegan dan tahan panas dari Chefchoice.",
+    sizes: ["S","M"],
+    colors: ["Bening","biru",]
+  },
+  {
+    name: "Brown Teddy",
+    price: 145000,
+    img: "images/jam4.png",
+    description: "Boneka teddy bear cokelat yang lucu dan lembut.",
+    sizes: ["S", "M"],
+    colors: ["Coklat"]
+  },
+  {
+    name: "Kahf",
+    price: 18000,
+    img: "images/kahf.jpg",
+    description: "Sabun wajah pria dengan wangi maskulin dan menyegarkan.",
+    sizes: ["25ml","50ml"],
+    colors: ["Hijau Tua"]
+  },
+  {
+    name: "Minuteman Watches MM04",
+    price: 233000,
+    img: "images/p2.png",
+    description: "Jam tangan kasual MM04 dengan desain klasik dan elegan.",
+    sizes: ["26mm","38mm"],
+    colors: ["Hitam", "Silver"]
+  },
+  {
+    name: "Rok Satin",
+    price: 25000,
+    img: "images/rok3.jpg",
+    description: "Rok satin lembut dan mengkilap untuk tampilan feminin.",
+    sizes: ["S", "M", "L"],
+    colors: ["Merah", "Pink", "Hitam"]
+  },
+  {
+  name: "Smartwatch",
+  price: 1500000,
+  img: "images/smartwatch.jpg",
+  description: "Smartwatch canggih dengan berbagai fitur kesehatan dan olahraga.",
+  sizes: ["26mm","38mm"],
+  colors: ["Hitam", "Biru", "Abu"]
+}
+];
+
+  let cart = [];
+
+  // Render produk
+  function renderProducts() {
+    const productList = document.getElementById("product-list");
+    productList.innerHTML = "";
+
+    products.forEach(product => {
+      const sizes = product.sizes || [];
+      const colors = product.colors || [];
+
+      const div = document.createElement("div");
+      div.className = "product";
+     div.innerHTML = `
+     <img src="${product.img}" alt="${product.name}">
+     <h3>${product.name}</h3>
+     <p><strong>Rp${product.price.toLocaleString("id-ID")}</strong></p>
+
+    <div class="info">
+    <p>${product.description}</p>
+
+    <div class="options">
+      ${sizes.length ? `
+      <label for="size-${product.name}">
+      Ukuran
+      <select id="size-${product.name}">
+      ${sizes.map(size => `<option value="${size}">${size}</option>`).join("")}
+      </select>
+      </label>
+      ` : "<div style='flex:1'></div>"}
+
+      ${colors.length ? `
+      <label for="color-${product.name}">
+      Warna
+      <select id="color-${product.name}">
+      ${colors.map(color => `<option value="${color}">${color}</option>`).join("")}
+      </select>
+      </label>
+      ` : "<div style='flex:1'></div>"}
+    </div>
+  </div>
+
+  <button onclick="addToCart('${product.name}', ${product.price})">Masuk Keranjang</button>
+`;
+
+    productList.appendChild(div);
+    });
+  }
+
+  // Menambah produk ke keranjang
+  function addToCart(name, price) {
+  const sizeSelect = document.getElementById(`size-${name}`);
+  const colorSelect = document.getElementById(`color-${name}`);
+  const size = sizeSelect ? sizeSelect.value : "";
+  const color = colorSelect ? colorSelect.value : "";
+
+  // Cek apakah produk sudah ada di keranjang dengan kombinasi yang sama
+  const existing = cart.find(item => item.name === name && item.size === size && item.color === color);
+
+  if (existing) {
+    existing.qty += 1;
+  } else {
+    cart.push({ name, price, size, color, qty: 1 });
+  }
+
+  updateCart();
+  }
+
+  // Update keranjang
+  function updateCart() {
+  document.getElementById("cart-count").innerText = cart.reduce((sum, item) => sum + item.qty, 0);
+  const tbody = document.querySelector("#cart-items tbody");
+  tbody.innerHTML = "";
+
+  let total = 0;
+  cart.forEach((item, index) => {
+    const subtotal = item.price * item.qty;
+    total += subtotal;
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${item.name}</td>
+      <td>${item.size || '-'}</td>
+      <td>${item.color || '-'}</td>
+      <td>
+        <input type="number" value="${item.qty}" min="1" style="width:50px" onchange="changeQty(${index}, this.value)">
+      </td>
+      <td>Rp${item.price.toLocaleString("id-ID")}</td>
+      <td>Rp${subtotal.toLocaleString("id-ID")}</td>
+      <td><button onclick="removeItem(${index})">Hapus</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById("total").innerText = total.toLocaleString("id-ID");
+  }
+
+   function changeQty(index, qty) {
+  const newQty = parseInt(qty);
+  if (newQty > 0) {
+    cart[index].qty = newQty;
+  }
+  updateCart();
+  }
+
+ function removeItem(index) {
+  cart.splice(index, 1);
+  updateCart();
+  }
+
+  // Menampilkan atau menyembunyikan keranjang
+  function toggleCart() {
+    const cartBox = document.getElementById("cart-box");
+    cartBox.style.display = cartBox.style.display === "none" ? "block" : "none";
+  }
+
+  // Proses checkout dan tampilkan struk
+ function checkout() {
+  document.getElementById("checkout-section").style.display = "block";
+  document.getElementById("cart-box").style.display = "none";
+  document.getElementById("receipt").style.display = "none"; // pastikan struk belum muncul
+  }
+
+ function confirmCheckout() {
+  const address = document.getElementById("shipping-address").value.trim();
+  const method = document.getElementById("payment-method").value;
+
+  if (!address) {
+    alert("Silakan isi alamat pengiriman.");
+    return;
+  }
+
+  document.getElementById("checkout-section").style.display = "none";
+
+  const receiptDiv = document.getElementById("receipt");
+  const details = document.getElementById("receipt-details");
+  details.innerHTML = `<p><strong>Alamat Pengiriman:</strong> ${address}</p>`;
+  details.innerHTML += `<p><strong>Metode Pembayaran:</strong> ${method}</p><hr>`;
+
+  let total = 0;
+  let totalItem = 0;
+
+  cart.forEach(item => {
+    const subtotal = item.price * item.qty;
+    total += subtotal;
+    totalItem += item.qty;
+
+    const p = document.createElement("div");
+    p.style.marginBottom = "10px";
+    p.innerHTML = `
+      <img src="${getProductImage(item.name)}" alt="${item.name}" style="width:60px; height:60px; object-fit:cover; vertical-align:middle; margin-right:10px;">
+      <strong>${item.name}</strong><br>
+      Rp${item.price.toLocaleString("id-ID")} x ${item.qty} = Rp${subtotal.toLocaleString("id-ID")}<br>
+      Ukuran: ${item.size || "-"} | Warna: ${item.color || "-"}
+      `;
+      details.appendChild(p);
+     });
+
+  const totalP = document.createElement("p");
+  totalP.innerHTML = `<hr><strong>Total Produk: ${totalItem}</strong><br><strong>Total Bayar: Rp${total.toLocaleString("id-ID")}</strong>`;
+  details.appendChild(totalP);
+
+  receiptDiv.style.display = "block";
+  }
+
+ function getProductImage(name) {
+  const product = products.find(p => p.name === name);
+  return product ? product.img : "";
+  }
+
+  // Reset keranjang dan kembali ke halaman belanja
+  function resetShop() {
+    cart = [];
+    updateCart();
+    document.getElementById("receipt").style.display = "none";
+  }
+
+  // Panggil render produk saat halaman dimuat
+  window.onload = renderProducts;
+  </script>
+</body>
+</html>
